@@ -45,7 +45,7 @@ class Blockchain{
             }).on('close', function() {
                console.log("inside strem on" + d.length);
                //newBlock.height = d.length;
-               if (d.length>0){
+               if (d.length===0){
                  
                   let newBlock=new Block("First block in the chain - Genesis block");
                   // Block height
@@ -57,9 +57,7 @@ class Blockchain{
                   db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
                       if (err) return console.log('Block ' + key + ' submission failed', err);
                                          }) ;
-
-
- 
+                                
           
                }
              
