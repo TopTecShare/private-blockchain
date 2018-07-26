@@ -3,7 +3,12 @@
 |  =========================================================*/
 
 const SHA256 = require('crypto-js/sha256');
-
+/* ===== Leveldb ===============================
+|  Learn more: level: https://github.com/Level/level      |
+|  =========================================================*/
+const level = require('level');
+const chainDB = './chaindata2';
+const db = level(chainDB);
 
 /* ===== Block Class ==============================
 |  Class with a constructor for block 			   |
@@ -27,6 +32,21 @@ class Blockchain{
   constructor(){
     this.chain = [];
     this.addBlock(new Block("First block in the chain - Genesis block"));
+  }
+   // Add new block
+  addGenesisBlock(){
+    let newBlock=new Block("First block in the chain - Genesis block");
+    // Block height
+    newBlock.height = 0;
+    // UTC timestamp
+    newBlock.time = new Date().getTime().toString().slice(0,-3);
+   //put into 
+    
+     
+    // Block hash with SHA256 using newBlock and converting to a string
+    newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+    // Adding block object to chain
+  	
   }
 
   // Add new block
