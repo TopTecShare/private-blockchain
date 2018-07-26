@@ -7,7 +7,7 @@ const SHA256 = require('crypto-js/sha256');
 |  Learn more: level: https://github.com/Level/level      |
 |  =========================================================*/
 const level = require('level');
-const chainDB = './chaindata2';
+const chainDB = './chaindataelb';
 const db = level(chainDB);
 
 /* ===== Block Class ==============================
@@ -30,8 +30,8 @@ class Block{
 
 class Blockchain{
   constructor(){
-    this.chain = [];
-    this.addBlock(new Block("First block in the chain - Genesis block"));
+    //this.chain = [];
+    this. addGenesisBlock();
   }
    // Add Genesis block
   addGenesisBlock(){
@@ -43,7 +43,7 @@ class Blockchain{
    stream.on('data', function(data) {
       streamdata.push(data.value);
             }).on('close', function() {
-               console.log("inside strem on" + streamdata.length);
+               //console.log("inside strem on" + streamdata.length);
                //newBlock.height = d.length;
                if (streamdata.length===0){
                  
@@ -78,7 +78,7 @@ class Blockchain{
    stream.on('data', function(data) {
       streamdata.push(data.value);
             }).on('close', function() {
-               console.log("inside strem on" + streamdata.length);
+               //console.log("inside strem on" + streamdata.length);
                //
                if (streamdata.length>0){
                  
@@ -89,14 +89,16 @@ class Blockchain{
                   db.get(streamdata.length-1, function(err, value) {
                        if (err) return console.log('Not found!', err);
                              let block=   JSON.parse(value);
-                             newBlock.previousBlockHash=block.hash;  });  
-                  // UTC timestamp
+                             //onsole.log("add new block print " + block.hash);
+                             newBlock.previousBlockHash=block.hash; 
+                              // UTC timestamp
                   newBlock.time = new Date().getTime().toString().slice(0,-3);    
                   // Block hash with SHA256 using newBlock and converting to a string
                   newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
                   db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
                       if (err) return console.log('Block ' + newBlock.height + ' submission failed', err);
-                                         }) ;
+                                         }) ; });  
+                 
                                 
           
                }
@@ -147,7 +149,19 @@ class Blockchain{
           return false;
         }
     }
-
+    //print Chain
+    printchain(){
+    
+      var streamdata=[];
+      
+      var stream= db.createReadStream() ;
+      stream.on('data', function(data) {
+      streamdata.push(data.value);
+      //console.log(streamdata);
+            }).on('close', function() {
+            
+              console.log(streamdata);
+               });}
    // Validate blockchain
     validateChain(){
       let errorLog = [];
