@@ -120,7 +120,13 @@ class Blockchain{
     // get block
     getBlock(blockHeight){
       // return object as a single string
-      return JSON.parse(JSON.stringify(this.chain[blockHeight]));
+     
+       db.get(blockHeight, function(err, value) {
+                       if (err) return console.log('Not found!', err);
+                             let block=   JSON.parse(value);
+                            return block;  }); 
+     
+     
     }
 
     // validate block
