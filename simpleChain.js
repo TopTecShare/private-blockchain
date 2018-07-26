@@ -37,15 +37,15 @@ class Blockchain{
   addGenesisBlock(){
     
     // Adding block object to chain leveldb
-    var d=[];
+    var streamdata=[];
     
    var stream= db.createReadStream() ;
    stream.on('data', function(data) {
-      d.push(data.value);
+      streamdata.push(data.value);
             }).on('close', function() {
-               console.log("inside strem on" + d.length);
+               console.log("inside strem on" + streamdata.length);
                //newBlock.height = d.length;
-               if (d.length===0){
+               if (streamdata.length===0){
                  
                   let newBlock=new Block("First block in the chain - Genesis block");
                   // Block height
@@ -72,24 +72,24 @@ class Blockchain{
   
   
    //Variables to handle getting data from stream data event  
-   var d=[];
+   var streamdata=[];
     
    var stream= db.createReadStream() ;
    stream.on('data', function(data) {
-      d.push(data.value);
+      streamdata.push(data.value);
             }).on('close', function() {
-               console.log("inside strem on" + d.length);
+               console.log("inside strem on" + streamdata.length);
                //
-               if (d.length>0){
+               if (streamdata.length>0){
                  
                  
                   // Block height
-                  newBlock.height = d.length;
+                  newBlock.height = streamdata.length;
                   // previous block hash
-                  db.get(d.length-1, function(err, value) {
+                  db.get(streamdata.length-1, function(err, value) {
                        if (err) return console.log('Not found!', err);
-                             let bb=   JSON.parse(value);
-                             newBlock.previousBlockHash=bb.hash;  });  
+                             let block=   JSON.parse(value);
+                             newBlock.previousBlockHash=block.hash;  });  
                   // UTC timestamp
                   newBlock.time = new Date().getTime().toString().slice(0,-3);    
                   // Block hash with SHA256 using newBlock and converting to a string
@@ -109,12 +109,12 @@ class Blockchain{
     getBlockHeight(){
      // return this.chain.length-1;
       //Variables to handle getting data from stream data event  
-   var d=[];
+   var streamdata=[];
     
    var stream= db.createReadStream() ;
    stream.on('data', function(data) {
-      d.push(data.value);
-            }).on('close', function() {return d.length-1; });
+      streamdata.push(data.value);
+            }).on('close', function() {return streamdata.length-1; });
     }
 
     // get block
