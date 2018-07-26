@@ -151,16 +151,27 @@ class Blockchain{
    // Validate blockchain
     validateChain(){
       let errorLog = [];
-      for (var i = 0; i < this.chain.length-1; i++) {
+      
+      //Variables to handle getting data from stream data event  
+      var streamdata=[];
+      
+      var stream= db.createReadStream() ;
+      stream.on('data', function(data) {
+      streamdata.push(data.value);
+            }).on('close', function() {
+            
+            for (var i = 0; i < streamdata.length-1; i++) {
         // validate block
         if (!this.validateBlock(i))errorLog.push(i);
         // compare blocks hash link
-        let blockHash = this.chain[i].hash;
-        let previousHash = this.chain[i+1].previousBlockHash;
+        let blockHash = streamdata[i].hash;
+        let previousHash = streamdatan[i+1].previousBlockHash;
         if (blockHash!==previousHash) {
           errorLog.push(i);
         }
       }
+               });
+ 
       if (errorLog.length>0) {
         console.log('Block errors = ' + errorLog.length);
         console.log('Blocks: '+errorLog);
