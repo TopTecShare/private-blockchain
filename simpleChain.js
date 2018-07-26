@@ -107,7 +107,14 @@ class Blockchain{
 
   // Get block height
     getBlockHeight(){
-      return this.chain.length-1;
+     // return this.chain.length-1;
+      //Variables to handle getting data from stream data event  
+   var d=[];
+    
+   var stream= db.createReadStream() ;
+   stream.on('data', function(data) {
+      d.push(data.value);
+            }).on('close', function() {return d.length-1; });
     }
 
     // get block
