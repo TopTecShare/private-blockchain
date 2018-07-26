@@ -33,22 +33,39 @@ class Blockchain{
     this.chain = [];
     this.addBlock(new Block("First block in the chain - Genesis block"));
   }
-   // Add new block
+   // Add Genesis block
   addGenesisBlock(){
-    let newBlock=new Block("First block in the chain - Genesis block");
-    // Block height
-    newBlock.height = 0;
-    // UTC timestamp
-    newBlock.time = new Date().getTime().toString().slice(0,-3);
-   //put into 
     
-     
-    // Block hash with SHA256 using newBlock and converting to a string
-    newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-    // Adding block object to chain
-  	
-  }
+    // Adding block object to chain leveldb
+    var d=[];
+    
+   var stream= db.createReadStream() ;
+   stream.on('data', function(data) {
+      d.push(data.value);
+            }).on('close', function() {
+               console.log("inside strem on" + d.length);
+               //newBlock.height = d.length;
+               if (d.length>0){
+                 
+                  let newBlock=new Block("First block in the chain - Genesis block");
+                  // Block height
+                  newBlock.height = 0;
+                  // UTC timestamp
+                  newBlock.time = new Date().getTime().toString().slice(0,-3);    
+                  // Block hash with SHA256 using newBlock and converting to a string
+                  newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+                  db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
+                      if (err) return console.log('Block ' + key + ' submission failed', err);
+                                         }) ;
 
+
+ 
+          
+               }
+             
+        })
+  }
+    
   // Add new block
   addBlock(newBlock){
     // Block height
