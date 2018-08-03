@@ -23,174 +23,153 @@ class Block{
      this.previousBlockHash = ""
     }
 }
-
+ 
 /* ===== Blockchain Class ==========================
 |  Class with a constructor for new blockchain 		|
 |  ================================================*/
 
 class Blockchain{
   constructor(){
-    //this.chain = [];
-    this. addGenesisBlock();
+  this.addBlock(new Block("First block in the chain - Genesis block"));
   }
-   // Add Genesis block
-  addGenesisBlock(){
-    
-    // Adding block object to chain leveldb
-    var streamdata=[];
-    
-   var stream= db.createReadStream() ;
-   stream.on('data', function(data) {
-      streamdata.push(data.value);
-            }).on('close', function() {
-               //console.log("inside strem on" + streamdata.length);
-               //newBlock.height = d.length;
-               if (streamdata.length===0){
-                 
-                  let newBlock=new Block("First block in the chain - Genesis block");
-                  // Block height
-                  newBlock.height = 0;
-                  // UTC timestamp
-                  newBlock.time = new Date().getTime().toString().slice(0,-3);  
-                 
-                  // Block hash with SHA256 using newBlock and converting to a string
-                  newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-                  db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
-                      if (err) return console.log('Block ' + key + ' submission failed', err);
-                                         }) ;
-                                
-          
-               }
-             
-        })
-  }
-    
-  // Add new block
-  addBlock(newBlock){
   
-  
-  
-  
-   //Variables to handle getting data from stream data event  
-   var streamdata=[];
-    
-   var stream= db.createReadStream() ;
-   stream.on('data', function(data) {
-      streamdata.push(data.value);
-            }).on('close', function() {
-               //console.log("inside strem on" + streamdata.length);
-               //
-               if (streamdata.length>0){
-                 
-                 
-                  // Block height
-                  newBlock.height = streamdata.length;
-                  // previous block hash
-                  db.get(streamdata.length-1, function(err, value) {
-                       if (err) return console.log('Not found!', err);
-                             let block=   JSON.parse(value);
-                             //onsole.log("add new block print " + block.hash);
-                             newBlock.previousBlockHash=block.hash; 
-                              // UTC timestamp
-                  newBlock.time = new Date().getTime().toString().slice(0,-3);    
-                  // Block hash with SHA256 using newBlock and converting to a string
-                  newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-                  db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
-                      if (err) return console.log('Block ' + newBlock.height + ' submission failed', err);
-                                         }) ; });  
-                 
-                                
-          
-               }
-             
+  // ======================Helper Methods Section====================================== 
+  getAllData() {
+    return new Promise(function(resolve, reject) {
+    var alldata=[];
+        db.createReadStream({ keys: false, values: true }).on('data', function(data) {
+        alldata.push(data);
+       
+           
+        }).on('close', function() {
+          resolve(alldata);
         });
-   
-  }
+    });
+}
+  
+//===================end of helper Methods Section======================================
 
+
+//====================start of Class Methods====================================
+  addBlock(newBlock){
+
+    this.getAllData().then(function(data){
+    
+    
+    if (data.length>0){
+              
+       // Block height   
+        newBlock.height = data.length;
+      // UTC timestamp
+        newBlock.time = new Date().getTime().toString().slice(0,-3);
+      // previous block hash
+        newBlock.previousBlockHash =JSON.parse(data[data.length-1]).hash;
+      // Block hash with SHA256 using newBlock and converting to a string
+        newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+     // Adding block object to chain
+  	    db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
+              if (err) return console.log('Block ' + newBlock.height + ' submission failed', err);
+                }) ; 
+    
+    }else{
+     
+      // Block height
+        newBlock.height = 0;
+      // UTC timestamp
+        newBlock.time = new Date().getTime().toString().slice(0,-3);  
+      // Block hash with SHA256 using newBlock and converting to a string
+        newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
+        db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
+              if (err) return console.log('Block ' + newBlock.height + ' submission failed', err);
+                }) ; 
+                     
+    }});
+}
+
+ 
+ 
+ 
+ 
   // Get block height
     getBlockHeight(){
-     // return this.chain.length-1;
-      //Variables to handle getting data from stream data event  
-   var streamdata=[];
-    
-   var stream= db.createReadStream() ;
-   stream.on('data', function(data) {
-      streamdata.push(data.value);
-            }).on('close', function() {return streamdata.length-1; });
+     return new Promise(function(resolve, reject) {
+    var alldata=[];
+        db.createReadStream({ keys: false, values: true }).on('data', function(data) {
+        alldata.push(data);
+       
+           
+        }).on('close', function() {
+          resolve(alldata.length);
+        });
+    });
     }
 
     // get block
-    getBlock(blockHeight){
-      // return object as a single string
-     
-       db.get(blockHeight, function(err, value) {
-                       if (err) return console.log('Not found!', err);
-                             let block=   JSON.parse(value);
-                            return block;  }); 
-     
+   async getBlock(blockHeight){   
+    
+          let block= await  db.get(blockHeight);;
+                      
+        return JSON.parse(block);
      
     }
 
-    // validate block
-    validateBlock(blockHeight){
-      // get block object
-      let block = this.getBlock(blockHeight);
-      // get block hash
+    
+    
+    
+ async validateBlock(blockHeight){
+ 
+    // get block object
+      let block = await this.getBlock(blockHeight);
+    // get block hash
       let blockHash = block.hash;
-      // remove block hash to test block integrity
+   // remove block hash to test block integrity
       block.hash = '';
-      // generate block hash
+  // generate block hash
       let validBlockHash = SHA256(JSON.stringify(block)).toString();
-      // Compare
-      if (blockHash===validBlockHash) {
+   // Compare
+     if (blockHash===validBlockHash) {
+      
           return true;
         } else {
-          console.log('Block #'+blockHeight+' invalid hash:\n'+blockHash+'<>'+validBlockHash);
+          
           return false;
         }
-    }
-    //print Chain
-    printchain(){
+       
+    }   
+   
     
-      var streamdata=[];
-      
-      var stream= db.createReadStream() ;
-      stream.on('data', function(data) {
-      streamdata.push(data.value);
-      //console.log(streamdata);
-            }).on('close', function() {
-            
-              console.log(streamdata);
-               });}
-   // Validate blockchain
-    validateChain(){
+    
+    
+    
+// Validate blockchain
+  async validateChain(){
       let errorLog = [];
+      let alldata= await this.getAllData();
+      for (var i=0; i<alldata.length-1;i++){
+          const validBlock=await this.validateBlock(i);
+          if (!validBlock)errorLog.push(i);
+          let blockHash = JSON.parse(alldata[i]).hash;
+          let previousHash = JSON.parse(alldata[i+1]).previousBlockHash;
+          if (blockHash!==previousHash) {
+            errorLog.push(i);
+          }
       
-      //Variables to handle getting data from stream data event  
-      var streamdata=[];
-      
-      var stream= db.createReadStream() ;
-      stream.on('data', function(data) {
-      streamdata.push(data.value);
-            }).on('close', function() {
-            
-            for (var i = 0; i < streamdata.length-1; i++) {
-        // validate block
-        if (!this.validateBlock(i))errorLog.push(i);
-        // compare blocks hash link
-        let blockHash = streamdata[i].hash;
-        let previousHash = streamdatan[i+1].previousBlockHash;
-        if (blockHash!==previousHash) {
-          errorLog.push(i);
-        }
       }
-               });
- 
-      if (errorLog.length>0) {
+      const validBlock=await this.validateBlock(alldata.length-1);
+          if (!validBlock)errorLog.push(alldata.length-1);
+       if (errorLog.length>0) {
         console.log('Block errors = ' + errorLog.length);
         console.log('Blocks: '+errorLog);
       } else {
         console.log('No errors detected');
       }
-    }
-}
+      
+    }    
+    
+  
+  }
+let a= new Blockchain;
+
+
+a.validateChain();
+
