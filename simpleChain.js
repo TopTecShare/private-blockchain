@@ -168,8 +168,4 @@ class Blockchain{
     
   
   }
-let a= new Blockchain;
-
-
-a.validateChain();
 
