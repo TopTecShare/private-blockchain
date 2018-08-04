@@ -30,10 +30,12 @@ class Block{
 
 class Blockchain{
   constructor(){
-  this.addBlock(new Block("First block in the chain - Genesis block"));
+  this.addGenesisBlock(new Block("First block in the chain - Genesis block"));
   }
   
   // ======================Helper Methods Section====================================== 
+  
+  //Get the value of all data in the Leveldb and return a promise
   getAllData() {
     return new Promise(function(resolve, reject) {
     var alldata=[];
@@ -51,19 +53,22 @@ class Blockchain{
 
 
 //====================start of Class Methods====================================
-  addBlock(newBlock){
 
-    this.getAllData().then(function(data){
+ // Method called only at the constuctor to generate first Genesis Block if no block is in the chain
+ async addGenesisBlock(newBlock){
+
+    // waits to get all values array
+    let alldata= await this.getAllData();
     
     
-    if (data.length>0){
+    if (alldata.length===0){
               
        // Block height   
-        newBlock.height = data.length;
+        newBlock.height = 0;
       // UTC timestamp
         newBlock.time = new Date().getTime().toString().slice(0,-3);
       // previous block hash
-        newBlock.previousBlockHash =JSON.parse(data[data.length-1]).hash;
+        newBlock.previousBlockHash ="";
       // Block hash with SHA256 using newBlock and converting to a string
         newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
      // Adding block object to chain
@@ -71,19 +76,32 @@ class Blockchain{
               if (err) return console.log('Block ' + newBlock.height + ' submission failed', err);
                 }) ; 
     
-    }else{
-     
-      // Block height
-        newBlock.height = 0;
+    }
+}
+
+ 
+
+ async addBlock(newBlock){
+    // waits to get all values array
+  let alldata= await this.getAllData();
+    
+    
+    if (alldata.length>0){
+              
+       // Block height   
+        newBlock.height = alldata.length;
       // UTC timestamp
-        newBlock.time = new Date().getTime().toString().slice(0,-3);  
+        newBlock.time = new Date().getTime().toString().slice(0,-3);
+      // previous block hash
+        newBlock.previousBlockHash =JSON.parse(alldata[alldata.length-1]).hash;
       // Block hash with SHA256 using newBlock and converting to a string
         newBlock.hash = SHA256(JSON.stringify(newBlock)).toString();
-        db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
+     // Adding block object to chain
+  	    db.put(newBlock.height, JSON.stringify(newBlock), function(err) {
               if (err) return console.log('Block ' + newBlock.height + ' submission failed', err);
                 }) ; 
-                     
-    }});
+    
+    }
 }
 
  
@@ -99,7 +117,7 @@ class Blockchain{
        
            
         }).on('close', function() {
-          resolve(alldata.length);
+          resolve(alldata.length-1);
         });
     });
     }
@@ -167,5 +185,6 @@ class Blockchain{
     }    
     
   
+   
   }
 
